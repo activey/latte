@@ -27,8 +27,8 @@ class CounterModel implements Model {
     public UpdateResult<? extends Model> update(Message msg) {
         if (msg instanceof KeyPress keyPress) {
             return switch (keyPress.key()) {
-                case 'k', 'K' -> new UpdateResult<>(this, app -> app.send(CounterMsg.INCREMENT));
-                case 'j', 'J' -> new UpdateResult<>(this, app -> app.send(CounterMsg.DECREMENT));
+                case 'k', 'K', 65 -> new UpdateResult<>(this, app -> app.send(CounterMsg.INCREMENT));
+                case 'j', 'J', 66 -> new UpdateResult<>(this, app -> app.send(CounterMsg.DECREMENT));
                 case 'd', 'D' -> new UpdateResult<>(this, app -> app.send(CounterMsg.INCREMENT_LATER));
                 case 'q', 'Q' -> new UpdateResult<>(this, Program::quit);
                 default -> new UpdateResult<>(this, null);

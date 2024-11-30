@@ -28,8 +28,7 @@ public class Program {
         try {
             this.terminal = TerminalBuilder.builder()
                     .system(true)
-                    .jansi(true)
-//                    .jna(true)
+                    .jni(true)
                     .build();
             terminal.enterRawMode();
 
@@ -98,6 +97,12 @@ public class Program {
 
             renderer.write(currentModel.view());
         }
+
+        shutdown();
+    }
+
+    private void shutdown() {
+        renderer.showCursor();
     }
 
     private void initTerminal() {
