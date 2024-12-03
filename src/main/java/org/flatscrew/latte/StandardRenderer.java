@@ -158,8 +158,8 @@ public class StandardRenderer implements Renderer {
     public void showCursor() {
         renderLock.lock();
         try {
-            terminal.writer().print("\033[?25h"); // ANSI escape code to show cursor
-            terminal.writer().flush();
+            terminal.puts(InfoCmp.Capability.cursor_visible);
+            terminal.flush();
         } finally {
             renderLock.unlock();
         }
@@ -169,8 +169,8 @@ public class StandardRenderer implements Renderer {
     public void hideCursor() {
         renderLock.lock();
         try {
-            terminal.writer().print("\033[?25l"); // ANSI escape code to hide cursor
-            terminal.writer().flush();
+            terminal.puts(InfoCmp.Capability.cursor_invisible);
+            terminal.flush();
         } finally {
             renderLock.unlock();
         }

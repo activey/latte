@@ -2,10 +2,10 @@ package org.flatscrew.latte;
 
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
-import org.jline.utils.InfoCmp;
 
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -49,19 +49,11 @@ public class Program {
                     send(new KeyPress(input));
                 }
             } catch (IOException e) {
-                if (isRunning.get()) {
-                    e.printStackTrace();
-                }
+                e.printStackTrace();
             }
         });
         inputThread.setDaemon(true);
         inputThread.start();
-    }
-
-    private void clearScreen() {
-        terminal.puts(InfoCmp.Capability.cursor_home);   // Move cursor to top-left
-        terminal.puts(InfoCmp.Capability.clr_eos);       // Clear from cursor to end of screen
-        terminal.flush();
     }
 
     public void run() {
@@ -69,9 +61,9 @@ public class Program {
             throw new IllegalStateException("Latte is already running");
         }
 
-        Cmd initCmd = currentModel.init();
-        if (initCmd != null) {
-            cmdExecutor.submit(() -> initCmd.execute(this));
+        Command initCommand = currentModel.init();
+        if (initCommand != null) {
+            cmdExecutor.submit(initCommand::execute);
         }
 
         initTerminal();
@@ -82,11 +74,28 @@ public class Program {
             try {
                 Message msg = messageQueue.poll(50, TimeUnit.MILLISECONDS);
                 if (msg != null) {
+                    if (msg instanceof Quit) {
+                        quit();
+                        break;
+                    }
+
                     UpdateResult<? extends Model> updateResult = currentModel.update(msg);
+
                     currentModel = updateResult.model();
                     renderer.notifyModelChanged();
-                    if (updateResult.cmd() != null) {
-                        cmdExecutor.submit(() -> updateResult.cmd().execute(this));
+
+                    if (updateResult.command() != null) {
+                        CompletableFuture
+                                .supplyAsync(() -> {
+                                    return updateResult.command().execute();
+                                }, cmdExecutor)
+                                .thenAccept(msg1 -> {
+                                    send(msg1);
+                                })
+                                .exceptionally(ex -> {
+                                    ex.printStackTrace();
+                                    return null;
+                                });
                     }
                 }
 

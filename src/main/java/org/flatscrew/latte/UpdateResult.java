@@ -1,8 +1,12 @@
 package org.flatscrew.latte;
 
-public record UpdateResult<M extends Model>(M model, Cmd cmd) {
+public record UpdateResult<M extends Model>(M model, Command command) {
 
-    public static <M extends Model> UpdateResult<M> of(M model) {
+    public static <M extends Model> UpdateResult<M> from(M model, Command cmd) {
         return new UpdateResult<>(model, null);
+    }
+
+    public static <M extends Model> UpdateResult<M> from(M model) {
+        return UpdateResult.from(model, null);
     }
 }
