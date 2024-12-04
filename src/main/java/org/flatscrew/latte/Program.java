@@ -2,6 +2,7 @@ package org.flatscrew.latte;
 
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.InfoCmp;
 
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
@@ -108,6 +109,9 @@ public class Program {
 
     private void shutdown() {
         renderer.showCursor();
+
+        terminal.writer().print("\n\r");  // Move cursor to start of line
+        terminal.writer().flush();
     }
 
     private void initTerminal() {

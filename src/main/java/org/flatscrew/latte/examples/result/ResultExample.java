@@ -31,15 +31,6 @@ class ResultModel implements Model {
 
     public ResultModel() {}
 
-    public ResultModel(int cursor) {
-        this.cursor = cursor;
-    }
-
-    public ResultModel(int cursor, String choice) {
-        this.cursor = cursor;
-        this.choice = choice;
-    }
-
     @Override
     public Command init() {
         return null;
@@ -65,7 +56,8 @@ class ResultModel implements Model {
         Choice[] values = Choice.values();
         for (Choice choice : values) {
             if (choice.ordinal() == cursor) {
-                return new ResultModel(cursor, choice.getName());
+                this.choice =  choice.getName();
+                return this;
             }
         }
         return this;
@@ -73,16 +65,20 @@ class ResultModel implements Model {
 
     private Model moveUp() {
         if (cursor - 1 <= 0 ) {
-            return new ResultModel(0);
+            cursor = 0;
+            return this;
         }
-        return new ResultModel(cursor - 1);
+        cursor--;
+        return this;
     }
 
     private Model moveDown() {
         if (cursor + 1 >= Choice.values().length) {
-            return new ResultModel(0);
+            cursor = 0;
+            return this;
         }
-        return new ResultModel(cursor + 1);
+        cursor++;
+        return this;
     }
 
     @Override
@@ -112,11 +108,13 @@ class ResultModel implements Model {
 public class ResultExample {
 
     public static void main(String[] args) {
-        Program program = new Program(new ResultModel());
+        ResultModel resultModel = new ResultModel();
+        Program program = new Program(resultModel);
         program.run();
 
-        if (program.getCurrentModel() instanceof ResultModel resultModel && resultModel.getChoice() != null) {
-            System.out.printf("\n---\nYou chose: %s!\n", resultModel.getChoice());
+        if (resultModel.getChoice() == null) {
+            return;
         }
+        System.out.printf("\n---\nYou chose: %s!\n", resultModel.getChoice());
     }
 }
