@@ -86,12 +86,8 @@ public class Program {
 
                     if (updateResult.command() != null) {
                         CompletableFuture
-                                .supplyAsync(() -> {
-                                    return updateResult.command().execute();
-                                }, cmdExecutor)
-                                .thenAccept(msg1 -> {
-                                    send(msg1);
-                                })
+                                .supplyAsync(() -> updateResult.command().execute(), cmdExecutor)
+                                .thenAccept(this::send)
                                 .exceptionally(ex -> {
                                     ex.printStackTrace();
                                     return null;
@@ -127,5 +123,9 @@ public class Program {
     public void quit() {
         isRunning.set(false);
         cmdExecutor.shutdown();
+    }
+
+    public Model getCurrentModel() {
+        return currentModel;
     }
 }

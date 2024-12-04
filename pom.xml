@@ -37,7 +37,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.flatscrew.latte.examples.counter.CounterExample</mainClass>
+                                    <mainClass>org.flatscrew.latte.examples.result.ResultExample</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
