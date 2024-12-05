@@ -58,6 +58,21 @@ public class Program {
     }
 
     public void run() {
+        Model model = eventLoop();
+
+        renderer.write(model.view());
+        renderer.stop();
+        renderer.showCursor();
+
+        terminal.puts(InfoCmp.Capability.carriage_return);
+        terminal.puts(InfoCmp.Capability.cursor_down);
+        terminal.flush();
+
+        // Finally clean up
+        shutdown();
+    }
+
+    private Model eventLoop() {
         if (!isRunning.compareAndSet(false, true)) {
             throw new IllegalStateException("Latte is already running");
         }
@@ -76,8 +91,7 @@ public class Program {
                 Message msg = messageQueue.poll(50, TimeUnit.MILLISECONDS);
                 if (msg != null) {
                     if (msg instanceof Quit) {
-                        quit();
-                        break;
+                        return currentModel;
                     } else if (msg instanceof EnterAltScreen) {
                         renderer.enterAltScreen();
                         continue;
@@ -110,15 +124,12 @@ public class Program {
             renderer.write(currentModel.view());
         }
 
-        shutdown();
+        return currentModel;
     }
 
     private void shutdown() {
-        renderer.showCursor();
-        
-        terminal.puts(InfoCmp.Capability.carriage_return);
-        terminal.puts(InfoCmp.Capability.cursor_down);
-        terminal.flush();
+        isRunning.set(false);
+        cmdExecutor.shutdown();
     }
 
     private void initTerminal() {
@@ -129,10 +140,5 @@ public class Program {
         if (isRunning.get()) {
             messageQueue.offer(msg);
         }
-    }
-
-    public void quit() {
-        isRunning.set(false);
-        cmdExecutor.shutdown();
     }
 }

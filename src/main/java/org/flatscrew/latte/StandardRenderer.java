@@ -26,8 +26,6 @@ public class StandardRenderer implements Renderer {
     private int linesRendered = 0;
     private int width = 0;
     private int height = 0;
-    private boolean cursorHidden;
-    private boolean altScreenActive;
 
     public StandardRenderer(Terminal terminal) {
         this(terminal, DEFAULT_FPS);
@@ -62,7 +60,6 @@ public class StandardRenderer implements Renderer {
 
     public void stop() {
         isRunning = false;
-        ticker.shutdown();
         try {
             ticker.awaitTermination(frameTime * 2, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
@@ -124,7 +121,6 @@ public class StandardRenderer implements Renderer {
             lastRender = buffer.toString();
             lastRenderedLines = newLines;
             linesRendered = newLines.length;
-            buffer.setLength(0);
             needsRender = false;  // Move it here after successful flush
         } finally {
             renderLock.unlock();
@@ -149,7 +145,6 @@ public class StandardRenderer implements Renderer {
         try {
             terminal.puts(InfoCmp.Capability.cursor_visible);
             terminal.flush();
-            this.cursorHidden = false;
         } finally {
             renderLock.unlock();
         }
@@ -161,7 +156,6 @@ public class StandardRenderer implements Renderer {
         try {
             terminal.puts(InfoCmp.Capability.cursor_invisible);
             terminal.flush();
-            this.cursorHidden = true;
         } finally {
             renderLock.unlock();
         }
@@ -195,7 +189,6 @@ public class StandardRenderer implements Renderer {
             needsRender = true;
 
             terminal.flush();
-            altScreenActive = true;
         } finally {
             renderLock.unlock();
         }
@@ -212,7 +205,6 @@ public class StandardRenderer implements Renderer {
             needsRender = true;
 
             terminal.flush();
-            altScreenActive = false;
         } finally {
             renderLock.unlock();
         }
