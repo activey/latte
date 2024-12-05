@@ -26,6 +26,8 @@ public class StandardRenderer implements Renderer {
     private int linesRendered = 0;
     private int width = 0;
     private int height = 0;
+    private boolean cursorHidden;
+    private boolean altScreenActive;
 
     public StandardRenderer(Terminal terminal) {
         this(terminal, DEFAULT_FPS);
@@ -123,13 +125,14 @@ public class StandardRenderer implements Renderer {
             lastRenderedLines = newLines;
             linesRendered = newLines.length;
             buffer.setLength(0);
+            needsRender = false;  // Move it here after successful flush
         } finally {
             renderLock.unlock();
         }
     }
 
     public void write(String view) {
-        if (!isRunning || !needsRender) return;
+        if (!isRunning) return;  // Removed needsRender check here
 
         renderLock.lock();
         try {
@@ -137,7 +140,30 @@ public class StandardRenderer implements Renderer {
             buffer.append(view);
         } finally {
             renderLock.unlock();
-            needsRender = false;
+        }
+    }
+
+    @Override
+    public void showCursor() {
+        renderLock.lock();
+        try {
+            terminal.puts(InfoCmp.Capability.cursor_visible);
+            terminal.flush();
+            this.cursorHidden = false;
+        } finally {
+            renderLock.unlock();
+        }
+    }
+
+    @Override
+    public void hideCursor() {
+        renderLock.lock();
+        try {
+            terminal.puts(InfoCmp.Capability.cursor_invisible);
+            terminal.flush();
+            this.cursorHidden = true;
+        } finally {
+            renderLock.unlock();
         }
     }
 
@@ -155,22 +181,38 @@ public class StandardRenderer implements Renderer {
     }
 
     @Override
-    public void showCursor() {
+    public void enterAltScreen() {
         renderLock.lock();
         try {
-            terminal.puts(InfoCmp.Capability.cursor_visible);
+            if (terminal.getType().equals("dumb")) return;
+
+            terminal.puts(InfoCmp.Capability.enter_ca_mode);
+            terminal.puts(InfoCmp.Capability.clear_screen);
+            terminal.puts(InfoCmp.Capability.cursor_home);
+
+            // Force a complete repaint when entering alt screen
+            repaint();
+            needsRender = true;
+
             terminal.flush();
+            altScreenActive = true;
         } finally {
             renderLock.unlock();
         }
     }
 
     @Override
-    public void hideCursor() {
+    public void exitAltScreen() {
         renderLock.lock();
         try {
-            terminal.puts(InfoCmp.Capability.cursor_invisible);
+            terminal.puts(InfoCmp.Capability.exit_ca_mode);
+
+            // Force a repaint when exiting alt screen
+            repaint();
+            needsRender = true;
+
             terminal.flush();
+            altScreenActive = false;
         } finally {
             renderLock.unlock();
         }
@@ -179,5 +221,12 @@ public class StandardRenderer implements Renderer {
     @Override
     public void notifyModelChanged() {
         this.needsRender = true;
+    }
+
+    @Override
+    public void repaint() {
+        lastRender = "";
+        lastRenderedLines = new String[]{};
+        buffer.setLength(0);
     }
 }

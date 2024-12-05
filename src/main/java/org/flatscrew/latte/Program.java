@@ -78,6 +78,12 @@ public class Program {
                     if (msg instanceof Quit) {
                         quit();
                         break;
+                    } else if (msg instanceof EnterAltScreen) {
+                        renderer.enterAltScreen();
+                        continue;
+                    } else if (msg instanceof ExitAltScreen) {
+                        renderer.exitAltScreen();
+                        continue;
                     }
 
                     UpdateResult<? extends Model> updateResult = currentModel.update(msg);
@@ -109,9 +115,10 @@ public class Program {
 
     private void shutdown() {
         renderer.showCursor();
-
-        terminal.writer().print("\n\r");  // Move cursor to start of line
-        terminal.writer().flush();
+        
+        terminal.puts(InfoCmp.Capability.carriage_return);
+        terminal.puts(InfoCmp.Capability.cursor_down);
+        terminal.flush();
     }
 
     private void initTerminal() {
@@ -127,9 +134,5 @@ public class Program {
     public void quit() {
         isRunning.set(false);
         cmdExecutor.shutdown();
-    }
-
-    public Model getCurrentModel() {
-        return currentModel;
     }
 }

@@ -5,9 +5,11 @@ public interface Renderer {
     void start();
     void stop();
     void write(String view);
-    void clearScreen();
     void showCursor();
     void hideCursor();
-
+    void clearScreen();
+    void enterAltScreen();
+    void exitAltScreen();
     void notifyModelChanged();
+    void repaint();
 }
