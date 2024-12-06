@@ -41,6 +41,12 @@ public class Program {
         }
     }
 
+
+    public Program withAltScreen() {
+        renderer.enterAltScreen();
+        return this;
+    }
+
     private void startKeyboardInput() {
         Thread inputThread = new Thread(() -> {
             try {
@@ -79,7 +85,13 @@ public class Program {
 
         Command initCommand = currentModel.init();
         if (initCommand != null) {
-            cmdExecutor.submit(initCommand::execute);
+            CompletableFuture
+                    .supplyAsync(initCommand::execute, cmdExecutor)
+                    .thenAccept(this::send)
+                    .exceptionally(ex -> {
+                        ex.printStackTrace();
+                        return null;
+                    });
         }
 
         initTerminal();
@@ -104,6 +116,7 @@ public class Program {
 
                     currentModel = updateResult.model();
                     renderer.notifyModelChanged();
+
 
                     if (updateResult.command() != null) {
                         CompletableFuture

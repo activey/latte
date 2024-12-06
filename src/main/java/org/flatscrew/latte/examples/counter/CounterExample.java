@@ -8,11 +8,15 @@ import org.flatscrew.latte.Program;
 import org.flatscrew.latte.Quit;
 import org.flatscrew.latte.UpdateResult;
 
-class CounterModel implements Model {
+public class CounterExample implements Model {
 
     private final int value;
 
-    public CounterModel(int value) {
+    public CounterExample() {
+        this(0);
+    }
+
+    public CounterExample(int value) {
         this.value = value;
     }
 
@@ -49,12 +53,12 @@ class CounterModel implements Model {
         return new UpdateResult<>(this, null);
     }
 
-    public CounterModel increment() {
-        return new CounterModel(value + 1);
+    public CounterExample increment() {
+        return new CounterExample(value + 1);
     }
 
-    public CounterModel decrement() {
-        return new CounterModel(value - 1);
+    public CounterExample decrement() {
+        return new CounterExample(value - 1);
     }
 
     @Override
@@ -72,12 +76,9 @@ class CounterModel implements Model {
                 q - Quit
                \s""".formatted(value);
     }
-}
-
-public class CounterExample {
 
     public static void main(String[] args) {
-        Program app = new Program(new CounterModel(0));
+        Program app = new Program(new CounterExample(0));
         app.run();
     }
 }

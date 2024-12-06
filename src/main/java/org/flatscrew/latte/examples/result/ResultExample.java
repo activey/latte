@@ -24,12 +24,10 @@ enum Choice {
     }
 }
 
-class ResultModel implements Model {
+public class ResultExample implements Model  {
 
     private int cursor;
     private String choice;
-
-    public ResultModel() {}
 
     @Override
     public Command init() {
@@ -38,7 +36,6 @@ class ResultModel implements Model {
 
     @Override
     public UpdateResult<? extends Model> update(Message msg) {
-
         if (msg instanceof KeyPress keyPress) {
             return switch (keyPress.key()) {
                 case 'k', 'K', 65 -> new UpdateResult<>(this.moveUp(), null);
@@ -48,7 +45,6 @@ class ResultModel implements Model {
                 default -> new UpdateResult<>(this, null);
             };
         }
-
         return new UpdateResult<>(this, null);
     }
 
@@ -103,12 +99,9 @@ class ResultModel implements Model {
     public String getChoice() {
         return choice;
     }
-}
-
-public class ResultExample {
 
     public static void main(String[] args) {
-        ResultModel resultModel = new ResultModel();
+        ResultExample resultModel = new ResultExample();
         Program program = new Program(resultModel);
         program.run();
 

@@ -25,9 +25,9 @@ enum Mode {
     }
 }
 
-class ExampleModel implements Model {
+public class AltScreenToggleExample implements Model {
 
-    private boolean altscreen;
+    private boolean altScreen;
     private boolean quitting;
     private boolean suspending;
 
@@ -46,12 +46,12 @@ class ExampleModel implements Model {
                 }
                 case ' ' -> {
                     Command cmd;
-                    if (altscreen) {
+                    if (altScreen) {
                         cmd = ExitAltScreen::new;
                     } else {
                         cmd = EnterAltScreen::new;
                     }
-                    altscreen = !altscreen;
+                    altScreen = !altScreen;
                     yield new UpdateResult<>(this, cmd);
                 }
                 default -> new UpdateResult<>(this, null);
@@ -71,7 +71,7 @@ class ExampleModel implements Model {
         }
 
         Mode mode;
-        if (altscreen) {
+        if (altScreen) {
             mode = Mode.ALT_SCREEN;
         } else {
             mode = Mode.INLINE;
@@ -80,12 +80,9 @@ class ExampleModel implements Model {
         return "\n\n You're in %s\n\n\n".formatted(mode.getDescription()) +
                 "  space: switch modes • ctrl-z: suspend • q: exit\n";
     }
-}
-
-public class Example {
 
     public static void main(String[] args) {
-        Program program = new Program(new ExampleModel());
+        Program program = new Program(new AltScreenToggleExample());
         program.run();
     }
 }
