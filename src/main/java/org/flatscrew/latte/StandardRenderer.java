@@ -26,6 +26,7 @@ public class StandardRenderer implements Renderer {
     private int linesRendered = 0;
     private int width = 0;
     private int height = 0;
+    private boolean isInAltScreen;
 
     public StandardRenderer(Terminal terminal) {
         this(terminal, DEFAULT_FPS);
@@ -35,7 +36,7 @@ public class StandardRenderer implements Renderer {
         this.terminal = terminal;
         this.frameTime = 1000 / Math.min(Math.max(fps, 1), 120);
         this.ticker = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "Renderer-Thread");
+            Thread t = new Thread(r, "Latte-Renderer-Thread");
             t.setDaemon(true);
             return t;
         });
@@ -68,6 +69,10 @@ public class StandardRenderer implements Renderer {
     }
 
     private void flush() {
+        if (!needsRender) {
+            return;
+        }
+
         renderLock.lock();
         try {
             if (buffer.isEmpty() || buffer.toString().equals(lastRender)) {
@@ -121,7 +126,7 @@ public class StandardRenderer implements Renderer {
             lastRender = buffer.toString();
             lastRenderedLines = newLines;
             linesRendered = newLines.length;
-            needsRender = false;  // Move it here after successful flush
+            needsRender = false;
         } finally {
             renderLock.unlock();
         }
@@ -175,7 +180,16 @@ public class StandardRenderer implements Renderer {
     }
 
     @Override
+    public boolean altScreen() {
+        return isInAltScreen;
+    }
+
+    @Override
     public void enterAltScreen() {
+        if (isInAltScreen) {
+            return;
+        }
+
         renderLock.lock();
         try {
             if (terminal.getType().equals("dumb")) return;
@@ -187,6 +201,7 @@ public class StandardRenderer implements Renderer {
             // Force a complete repaint when entering alt screen
             repaint();
             needsRender = true;
+            isInAltScreen = true;
 
             terminal.flush();
         } finally {
@@ -196,6 +211,10 @@ public class StandardRenderer implements Renderer {
 
     @Override
     public void exitAltScreen() {
+        if (!altScreen()) {
+            return;
+        }
+
         renderLock.lock();
         try {
             terminal.puts(InfoCmp.Capability.exit_ca_mode);
@@ -203,6 +222,7 @@ public class StandardRenderer implements Renderer {
             // Force a repaint when exiting alt screen
             repaint();
             needsRender = true;
+            isInAltScreen = false;
 
             terminal.flush();
         } finally {
@@ -219,6 +239,5 @@ public class StandardRenderer implements Renderer {
     public void repaint() {
         lastRender = "";
         lastRenderedLines = new String[]{};
-        buffer.setLength(0);
     }
 }

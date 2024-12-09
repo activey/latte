@@ -2,14 +2,30 @@ package org.flatscrew.latte;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.function.Function;
 
 public class Tick {
+
     public static Command tick(Duration duration, Function<LocalDateTime, Message> fn) {
         return () -> {
+            BlockingQueue<LocalDateTime> queue = new ArrayBlockingQueue<>(1);
+            Timer timer = new Timer(true);
+
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    queue.offer(LocalDateTime.now());
+                }
+            }, duration.toMillis());
+
             try {
-                Thread.sleep(duration.toMillis());
-                return fn.apply(LocalDateTime.now());
+                LocalDateTime time = queue.take();
+                timer.cancel();
+                return fn.apply(time);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

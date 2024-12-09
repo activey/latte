@@ -33,8 +33,9 @@ public class FullscreenExample implements Model {
             if (seconds <= 0) {
                 return UpdateResult.from(this, Quit::new);
             }
+            return UpdateResult.from(this, Tick.tick(Duration.ofSeconds(1), TickMessage::new));
         }
-        return UpdateResult.from(this, Tick.tick(Duration.ofSeconds(1), TickMessage::new));
+        return UpdateResult.from(this, null);
     }
 
     @Override

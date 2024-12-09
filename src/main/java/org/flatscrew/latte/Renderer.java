@@ -8,8 +8,10 @@ public interface Renderer {
     void showCursor();
     void hideCursor();
     void clearScreen();
+    boolean altScreen();
     void enterAltScreen();
     void exitAltScreen();
     void notifyModelChanged();
+
     void repaint();
 }

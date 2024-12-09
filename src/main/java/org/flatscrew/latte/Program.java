@@ -3,6 +3,7 @@ package org.flatscrew.latte;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.InfoCmp;
+import org.jline.utils.NonBlockingReader;
 
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
@@ -41,7 +42,6 @@ public class Program {
         }
     }
 
-
     public Program withAltScreen() {
         renderer.enterAltScreen();
         return this;
@@ -50,7 +50,7 @@ public class Program {
     private void startKeyboardInput() {
         Thread inputThread = new Thread(() -> {
             try {
-                var reader = terminal.reader();
+                NonBlockingReader reader = terminal.reader();
                 while (isRunning.get()) {
                     int input = reader.read();
                     send(new KeyPress(input));
@@ -64,25 +64,30 @@ public class Program {
     }
 
     public void run() {
+        if (!isRunning.compareAndSet(false, true)) {
+            throw new IllegalStateException("Program is already running!");
+        }
+
         Model model = eventLoop();
 
         renderer.write(model.view());
         renderer.stop();
         renderer.showCursor();
 
+        if (renderer.altScreen()) {
+            renderer.exitAltScreen();
+        }
+
         terminal.puts(InfoCmp.Capability.carriage_return);
         terminal.puts(InfoCmp.Capability.cursor_down);
         terminal.flush();
 
         // Finally clean up
-        shutdown();
+        isRunning.set(false);
+        cmdExecutor.shutdown();
     }
 
     private Model eventLoop() {
-        if (!isRunning.compareAndSet(false, true)) {
-            throw new IllegalStateException("Latte is already running");
-        }
-
         Command initCommand = currentModel.init();
         if (initCommand != null) {
             CompletableFuture
@@ -94,8 +99,8 @@ public class Program {
                     });
         }
 
-        initTerminal();
         startKeyboardInput();
+        renderer.hideCursor();
         renderer.start();
 
         while (isRunning.get()) {
@@ -117,7 +122,6 @@ public class Program {
                     currentModel = updateResult.model();
                     renderer.notifyModelChanged();
 
-
                     if (updateResult.command() != null) {
                         CompletableFuture
                                 .supplyAsync(() -> updateResult.command().execute(), cmdExecutor)
@@ -138,15 +142,6 @@ public class Program {
         }
 
         return currentModel;
-    }
-
-    private void shutdown() {
-        isRunning.set(false);
-        cmdExecutor.shutdown();
-    }
-
-    private void initTerminal() {
-        renderer.hideCursor();
     }
 
     public void send(Message msg) {
