@@ -1,12 +1,11 @@
 package org.flatscrew.latte;
 
-import org.flatscrew.latte.message.EnterAltScreen;
-import org.flatscrew.latte.message.ExitAltScreen;
-import org.flatscrew.latte.message.KeyPress;
+import org.flatscrew.latte.message.*;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.InfoCmp;
 import org.jline.utils.NonBlockingReader;
+import org.jline.utils.Signals;
 
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
@@ -69,6 +68,7 @@ public class Program {
         }
 
         startKeyboardInput();
+        handleTerminationSignals();
 
         Model finalModel = eventLoop();
 
@@ -90,6 +90,11 @@ public class Program {
         commandExecutor.shutdown();
     }
 
+    private void handleTerminationSignals() {
+        Signals.register("INT", () -> send(new QuitMessage()));
+        Signals.register("TERM", () -> send(new QuitMessage()));
+    }
+
     private Model eventLoop() {
         Command initCommand = currentModel.init();
         commandExecutor.executeIfPresent(initCommand, this::send);
@@ -109,6 +114,12 @@ public class Program {
                     } else if (msg instanceof ExitAltScreen) {
                         renderer.exitAltScreen();
                         continue;
+                    } else if (msg instanceof QuitMessage) {
+                        return currentModel;
+                    } else if (msg instanceof BatchMessage batchMessage) {
+                        for (Command command : batchMessage.commands()) {
+                            commandExecutor.executeIfPresent(command, this::send);
+                        }
                     }
 
                     UpdateResult<? extends Model> updateResult = currentModel.update(msg);
