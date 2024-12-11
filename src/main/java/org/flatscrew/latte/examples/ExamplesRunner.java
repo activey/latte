@@ -5,6 +5,7 @@ import org.flatscrew.latte.examples.altscreentoggle.AltScreenToggleExample;
 import org.flatscrew.latte.examples.counter.CounterExample;
 import org.flatscrew.latte.examples.fullscreen.FullscreenExample;
 import org.flatscrew.latte.examples.result.ResultExample;
+import org.flatscrew.latte.message.KeyPress;
 
 import java.util.List;
 

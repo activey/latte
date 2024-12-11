@@ -1,9 +1,11 @@
 package org.flatscrew.latte.examples.altscreentoggle;
 
 import org.flatscrew.latte.Command;
-import org.flatscrew.latte.EnterAltScreen;
-import org.flatscrew.latte.ExitAltScreen;
-import org.flatscrew.latte.KeyPress;
+import org.flatscrew.latte.cream.Color;
+import org.flatscrew.latte.cream.Style;
+import org.flatscrew.latte.message.EnterAltScreen;
+import org.flatscrew.latte.message.ExitAltScreen;
+import org.flatscrew.latte.message.KeyPress;
 import org.flatscrew.latte.Message;
 import org.flatscrew.latte.Model;
 import org.flatscrew.latte.Program;
@@ -11,8 +13,8 @@ import org.flatscrew.latte.Quit;
 import org.flatscrew.latte.UpdateResult;
 
 enum Mode {
-    ALT_SCREEN("altscreen mode"),
-    INLINE("inline mode");
+    ALT_SCREEN(" altscreen mode "),
+    INLINE(" inline mode ");
 
     private final String description;
 
@@ -26,6 +28,13 @@ enum Mode {
 }
 
 public class AltScreenToggleExample implements Model {
+
+    private static final Style KEYWORD_STYLE = new Style()
+            .foreground(new Color(204))
+            .background(new Color(235));
+
+    private static final Style HELP_STYLE = new Style()
+            .foreground(new Color(241));
 
     private boolean altScreen;
     private boolean quitting;
@@ -77,8 +86,8 @@ public class AltScreenToggleExample implements Model {
             mode = Mode.INLINE;
         }
 
-        return "\n\n You're in %s\n\n\n".formatted(mode.getDescription()) +
-                "  space: switch modes • ctrl-z: suspend • q: exit\n";
+        return "\n\n  You're in %s\n\n\n".formatted(KEYWORD_STYLE.render(mode.getDescription())) +
+                HELP_STYLE.render("  space: switch modes • ctrl-z: suspend • q: exit\n");
     }
 
     public static void main(String[] args) {

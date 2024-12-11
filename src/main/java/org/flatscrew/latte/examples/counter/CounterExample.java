@@ -1,7 +1,7 @@
 package org.flatscrew.latte.examples.counter;
 
 import org.flatscrew.latte.Command;
-import org.flatscrew.latte.KeyPress;
+import org.flatscrew.latte.message.KeyPress;
 import org.flatscrew.latte.Message;
 import org.flatscrew.latte.Model;
 import org.flatscrew.latte.Program;

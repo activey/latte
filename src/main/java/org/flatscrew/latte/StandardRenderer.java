@@ -24,8 +24,8 @@ public class StandardRenderer implements Renderer {
     private final long frameTime;
     private String[] lastRenderedLines = new String[0];
     private int linesRendered = 0;
-    private int width = 0;
-    private int height = 0;
+    private int width;
+    private int height;
     private boolean isInAltScreen;
 
     public StandardRenderer(Terminal terminal) {
@@ -41,6 +41,7 @@ public class StandardRenderer implements Renderer {
             return t;
         });
 
+        width = 0;
         try {
             // Get terminal size
             this.width = terminal.getWidth();
@@ -61,11 +62,7 @@ public class StandardRenderer implements Renderer {
 
     public void stop() {
         isRunning = false;
-        try {
-            ticker.awaitTermination(frameTime * 2, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        ticker.close();
     }
 
     private void flush() {
@@ -104,8 +101,15 @@ public class StandardRenderer implements Renderer {
                     continue;
                 }
 
+                // Truncate lines wider than the width of the window to avoid
+                // wrapping, which will mess up rendering. If we don't have the
+                // width of the window this will be ignored.
+                String line = newLines[i];
+                if (this.width > 0 && line.length() > width) {
+                    line = line.substring(0, this.width);
+                }
                 // Clear line and write new content
-                outputBuffer.append("\r\033[K").append(newLines[i]);
+                outputBuffer.append("\r\033[K").append(line);
 
                 if (i < newLines.length - 1) {
                     outputBuffer.append("\n");
@@ -133,7 +137,7 @@ public class StandardRenderer implements Renderer {
     }
 
     public void write(String view) {
-        if (!isRunning) return;  // Removed needsRender check here
+        if (!isRunning) return;
 
         renderLock.lock();
         try {

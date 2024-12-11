@@ -1,5 +1,8 @@
 package org.flatscrew.latte;
 
+import org.flatscrew.latte.message.EnterAltScreen;
+import org.flatscrew.latte.message.ExitAltScreen;
+import org.flatscrew.latte.message.KeyPress;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.InfoCmp;
@@ -7,9 +10,6 @@ import org.jline.utils.NonBlockingReader;
 
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,13 +19,14 @@ public class Program {
     private final Renderer renderer;
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final BlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
-    private final ExecutorService cmdExecutor = Executors.newCachedThreadPool();
+    private final CommandExecutor commandExecutor;
     private volatile Model currentModel;
 
     private final Terminal terminal;
 
     public Program(Model initialModel) {
         this.currentModel = initialModel;
+        this.commandExecutor = new CommandExecutor();
 
         try {
             this.terminal = TerminalBuilder.builder()
@@ -52,8 +53,7 @@ public class Program {
             try {
                 NonBlockingReader reader = terminal.reader();
                 while (isRunning.get()) {
-                    int input = reader.read();
-                    send(new KeyPress(input));
+                    send(new KeyPress(reader.read()));
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -68,9 +68,12 @@ public class Program {
             throw new IllegalStateException("Program is already running!");
         }
 
-        Model model = eventLoop();
+        startKeyboardInput();
 
-        renderer.write(model.view());
+        Model finalModel = eventLoop();
+
+        // render final model view before closing
+        renderer.write(finalModel.view());
         renderer.stop();
         renderer.showCursor();
 
@@ -84,22 +87,13 @@ public class Program {
 
         // Finally clean up
         isRunning.set(false);
-        cmdExecutor.shutdown();
+        commandExecutor.shutdown();
     }
 
     private Model eventLoop() {
         Command initCommand = currentModel.init();
-        if (initCommand != null) {
-            CompletableFuture
-                    .supplyAsync(initCommand::execute, cmdExecutor)
-                    .thenAccept(this::send)
-                    .exceptionally(ex -> {
-                        ex.printStackTrace();
-                        return null;
-                    });
-        }
+        commandExecutor.executeIfPresent(initCommand, this::send);
 
-        startKeyboardInput();
         renderer.hideCursor();
         renderer.start();
 
@@ -121,26 +115,14 @@ public class Program {
 
                     currentModel = updateResult.model();
                     renderer.notifyModelChanged();
-
-                    if (updateResult.command() != null) {
-                        CompletableFuture
-                                .supplyAsync(() -> updateResult.command().execute(), cmdExecutor)
-                                .thenAccept(this::send)
-                                .exceptionally(ex -> {
-                                    ex.printStackTrace();
-                                    return null;
-                                });
-                    }
+                    commandExecutor.executeIfPresent(updateResult.command(), this::send);
                 }
-
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
             }
-
             renderer.write(currentModel.view());
         }
-
         return currentModel;
     }
 

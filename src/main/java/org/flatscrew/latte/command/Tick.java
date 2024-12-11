@@ -1,4 +1,7 @@
-package org.flatscrew.latte;
+package org.flatscrew.latte.command;
+
+import org.flatscrew.latte.Command;
+import org.flatscrew.latte.Message;
 
 import java.time.Duration;
 import java.time.LocalDateTime;

@@ -1,6 +1,7 @@
 package org.flatscrew.latte.examples.fullscreen;
 
 import org.flatscrew.latte.*;
+import org.flatscrew.latte.command.Tick;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
