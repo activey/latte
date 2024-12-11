@@ -67,7 +67,7 @@ public class AltScreenToggleExample implements Model {
             };
         }
 
-        return null;
+        return UpdateResult.from(this);
     }
 
     @Override

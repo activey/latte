@@ -8,12 +8,12 @@ public class Style {
     private AttributedStyle style = new AttributedStyle();
 
     public Style foreground(Color color) {
-        this.style = style.foreground(color.code());
+        this.style = color.applyAsForeground(style);
         return this;
     }
 
     public Style background(Color color) {
-        this.style = style.background(color.code());
+        this.style = color.applyAsBackground(style);
         return this;
     }
 
